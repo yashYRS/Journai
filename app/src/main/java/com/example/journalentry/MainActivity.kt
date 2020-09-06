@@ -14,6 +14,7 @@ class MainActivity : AppCompatActivity() {
         val submitButton: Button = findViewById(R.id.submit_button)
         val logButton: Button = findViewById(R.id.log_button)
         val speakButton: Button = findViewById(R.id.speak_button)
+        var speakButtonBGI = true
 
         submitButton.setOnClickListener {
             if (journalText.text.isNotEmpty()) {
@@ -23,11 +24,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         speakButton.setOnClickListener {
-            if (speakButton.text == R.string.mic_button.toString()) {
-                speakButton.text = "STOP"
-//                speakButton.color
+            speakButtonBGI = if (speakButtonBGI) {
+                speakButton.setBackgroundResource(R.drawable.stop)
+                false
             } else {
-                speakButton.text = "SPEAK"
+                speakButton.setBackgroundResource(R.drawable.start)
+                true
             }
         }
 
