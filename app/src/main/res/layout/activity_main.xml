@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".MainActivity" android:id="@+id/main_container">
+    <TextView
+            android:layout_width="251dp"
+            android:layout_height="40dp"
+            android:text="@string/info_text"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent" android:id="@+id/textView" android:layout_marginTop="100dp"
+            android:textColor="@android:color/black" android:textAlignment="center"
+            android:textAllCaps="true" android:textSize="18sp"/>
+    <TextView
+            android:layout_width="251dp"
+            android:layout_height="40dp"
+            android:text="@string/mic_test"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            android:id="@+id/textView2"
+            android:textColor="@android:color/black" android:textAlignment="center"
+            android:textAllCaps="true" android:textSize="18sp" app:layout_constraintBottom_toTopOf="@+id/speak_button"
+            app:layout_constraintTop_toBottomOf="@+id/submit_button"
+    />
+    <Button
+            android:text="@string/button_text"
+            android:layout_width="144dp"
+            android:layout_height="42dp" android:id="@+id/submit_button"
+            app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintTop_toBottomOf="@+id/journal_entry" android:layout_marginBottom="23dp"
+            app:layout_constraintBottom_toTopOf="@+id/textView2"/>
+    <EditText
+            android:layout_width="251dp"
+            android:layout_height="209dp"
+            android:inputType="textMultiLine"
+            android:gravity="start|top"
+            android:ems="10"
+            android:id="@+id/journal_entry"
+            app:layout_constraintBottom_toTopOf="@+id/submit_button"
+            app:layout_constraintTop_toBottomOf="@+id/textView" app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" android:hint="@string/type_prompt"
+            android:textAlignment="viewStart" android:autofillHints=""
+    />
+    <Button
+            android:layout_width="116dp"
+            android:layout_height="102dp" android:id="@+id/speak_button"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView2"
+            app:layout_constraintBottom_toTopOf="@+id/home_button"
+            style="@android:style/Widget.DeviceDefault.Light.Button.Borderless.Small"
+            android:background="@drawable/start" android:text="@string/mic_button"/>
+    <Button
+            android:text="@string/main_menu"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/button_height" android:id="@+id/home_button"
+            app:layout_constraintStart_toEndOf="@+id/log_button"
+            app:layout_constraintEnd_toStartOf="@+id/visual_button" app:layout_constraintBottom_toBottomOf="parent"
+            style="@style/Widget.AppCompat.Button.Borderless"/>
+    <Button
+            android:text="@string/log_button"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/button_height" android:id="@+id/log_button"
+            app:layout_constraintEnd_toStartOf="@+id/home_button"
+            app:layout_constraintStart_toStartOf="parent" app:layout_constraintBottom_toBottomOf="parent"
+            style="@android:style/Widget.DeviceDefault.Button.Borderless"/>
+    <Button
+            android:text="@string/visual_button"
+            android:layout_height="100dp" android:id="@+id/visual_button"
+            android:layout_width="0dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/home_button"
+            app:layout_constraintBottom_toBottomOf="parent"
+            style="@style/Widget.AppCompat.Button.Borderless"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
