@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    <TextView
+            android:id="@+id/textView"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:text="@string/info_text"
+            android:textColor="@android:color/black"
+            android:textAlignment="center"
+            android:textAllCaps="true"
+            android:textSize="18sp"
+            android:layout_marginTop="53dp"
+            android:layout_marginStart="-5dp"
+            android:layout_marginEnd="5dp"/>
+    <TextView
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:text="@string/mic_test"
+            android:id="@+id/textView2"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentEnd="true"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@id/submit_button"
+            android:layout_marginTop="50sp"
+            android:textSize="18sp"
+            android:textAllCaps="true"
+            android:textColor="@android:color/black"
+            android:textAlignment="center" />
+
+    <Button
+            android:text="@string/button_text"
+            android:layout_width="144dp"
+            android:layout_height="42dp"
+            android:layout_below="@id/journal_entry"
+            android:layout_centerHorizontal="true"
+            android:id="@+id/submit_button" />
+
+    <EditText
+            android:layout_width="@dimen/entry_card_size"
+            android:layout_height="@dimen/entry_card_size"
+            android:inputType="textMultiLine"
+            android:layout_below="@id/textView"
+            android:layout_centerHorizontal="true"
+            android:gravity="start|top"
+            android:ems="10"
+            android:id="@+id/journal_entry"
+            android:textAlignment="viewStart"
+            android:autofillHints="" android:hint="@string/type_prompt"/>
+
+    <Button
+            android:layout_width="138dp"
+            android:layout_height="129dp"
+            android:id="@+id/speak_button"
+            android:background="@drawable/start"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@id/textView2"
+            android:visibility="visible" />
+</RelativeLayout>

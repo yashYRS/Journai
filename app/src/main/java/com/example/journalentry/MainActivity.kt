@@ -1,45 +1,53 @@
 package com.example.journalentry
 
-import androidx.appcompat.app.AppCompatActivity
+import android.content.pm.PackageManager
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import com.example.journalentry.database.VisualizeActivity
+import com.google.android.material.bottomnavigation.BottomNavigationView
+
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val journalText: EditText = findViewById(R.id.journal_entry)
-        val submitButton: Button = findViewById(R.id.submit_button)
-        val logButton: Button = findViewById(R.id.log_button)
-        val speakButton: Button = findViewById(R.id.speak_button)
-        var speakButtonBGI = true
-
-        submitButton.setOnClickListener {
-            if (journalText.text.isNotEmpty()) {
-                val data = journalText.text.toString()
-                journalText.text.clear()
-            }
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED){
+            checkPermission()
         }
 
-        speakButton.setOnClickListener {
-            speakButtonBGI = if (speakButtonBGI) {
-                speakButton.setBackgroundResource(R.drawable.stop)
-                false
-            } else {
-                speakButton.setBackgroundResource(R.drawable.start)
-                true
-            }
+        val homeFrag = MenuActivity()
+        val logsFrag = LogActivity()
+        val visualFrag = VisualizeActivity()
+
+        makeCurrentFragment(homeFrag)
+
+        val bottomNav = findViewById<BottomNavigationView>(R.id.nav_bar)
+        bottomNav.setOnNavigationItemSelectedListener {
+             when(it.itemId) {
+                 R.id.nav_home -> makeCurrentFragment(homeFrag)
+                 R.id.nav_logs -> makeCurrentFragment(logsFrag)
+                 R.id.nav_visualize -> makeCurrentFragment(visualFrag)
+             }
+            true
         }
 
-        logButton.setOnClickListener {
-            setContentView(R.layout.logs)
-        }
     }
+
+
+    private fun makeCurrentFragment(fragment: Fragment) =
+        supportFragmentManager.beginTransaction().apply {
+            replace(R.id.nav_fragment, fragment)
+            commit()
+        }
+
+    private fun checkPermission() {
+        ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.RECORD_AUDIO), 0);
+    }
+
 }
 
-class DataLogs() {
-
-}
 

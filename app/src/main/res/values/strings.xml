@@ -7,4 +7,8 @@
     <string name="log_button">LOGS</string>
     <string name="main_menu">HOME</string>
     <string name="visual_button">VISUALIZE</string>
+    <string name="back_button_desc">A back button</string>
+    <string name="nav_home">HOME</string>
+    <string name="nav_logs">LOGS</string>
+    <string name="nav_visualize">VISUALIZE</string>
 </resources>
