@@ -12,8 +12,6 @@ import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import com.android.volley.RequestQueue
-import com.android.volley.toolbox.Volley
 import com.example.journalentry.database.DatabaseManager
 import com.example.journalentry.database.Note
 import com.example.journalentry.database.Sentence
@@ -25,11 +23,9 @@ import java.util.*
 class MenuActivity: Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.home, container, false)
-        val queue: RequestQueue = Volley.newRequestQueue(view.context)
         val dP = DataLogs()
         val dateFormat = SimpleDateFormat("dd.MM.yyyy")
         val speechRecognizer = SpeechRecognizer.createSpeechRecognizer(view.context)
-        val db = DatabaseManager(activity as AppCompatActivity)
         val submitButton: Button = view.findViewById(R.id.submit_button)
         val journalText: EditText = view.findViewById(R.id.journal_entry)
         val speakButton: Button = view.findViewById(R.id.speak_button)
@@ -42,12 +38,13 @@ class MenuActivity: Fragment() {
         speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
 
         fun parseData(data: String) {
+            val db = DatabaseManager(activity as AppCompatActivity)
             val note = Note(data, "", dateFormat.format(Date()))
             db.addNote(note)
             val noteId = db.getNoteId(note)
             val sentences = dP.dataSplitter(data)
             for (s in sentences) {
-                val sentence = Sentence(noteId, s, 0, 0)
+                val sentence = Sentence(noteId, s, 0f, 0, "", 0f)
                 db.addSentence(sentence)
             }
             db.close()
@@ -55,17 +52,42 @@ class MenuActivity: Fragment() {
 
         fun submitEventCallBacK(query: String) {
             // Request a string response from the provided URL.
-            ApiManager().getRequest(query)
+            ApiManager().getRequest(query, activity as AppCompatActivity)
+        }
+
+        fun updateNotes(note: Note) {
+            val db = DatabaseManager(activity as AppCompatActivity)
+            val noteId = db.getNoteId(note)
+            val sentenceNotes = db.getSentencesForNote(noteId)
+            var maxConf = 0f
+            var i = 0
+            var index = i
+            for (s in sentenceNotes) {
+                if (s.confidence > maxConf) {
+                    maxConf = s.confidence
+                    index = i
+                }
+                i += 1
+            }
+            val netIntent = sentenceNotes[index].intent
+            val newNote = Note(note.content, netIntent, note.dateTime)
+            db.updateNote(newNote, noteId)
+            db.close()
         }
 
         fun updateDB() {
+            val db = DatabaseManager(activity as AppCompatActivity)
             val strings = db.getSentences()
+            val notes = db.getNotes()
+            db.close()
             for (s in strings) {
-                if (s.entitiesId == 0) {
+                if (s.updated == 0) {
                     submitEventCallBacK(s.content)
                 }
             }
-            db.close()
+            for (n in notes) {
+                updateNotes(n)
+            }
         }
 
         submitButton.setOnClickListener {
@@ -85,7 +107,11 @@ class MenuActivity: Fragment() {
 
             override fun onRmsChanged(v: Float) {}
             override fun onBufferReceived(bytes: ByteArray) {}
-            override fun onEndOfSpeech() {}
+            override fun onEndOfSpeech() {
+                journalText.text.clear()
+                speakButton.setBackgroundResource(R.drawable.start)
+                startSpeech = false
+            }
             override fun onError(i: Int) {
                 journalText.text.clear()
                 speakButton.setBackgroundResource(R.drawable.start)

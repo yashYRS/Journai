@@ -6,7 +6,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import com.example.journalentry.database.VisualizeActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 
@@ -21,7 +20,6 @@ class MainActivity : AppCompatActivity() {
 
         val homeFrag = MenuActivity()
         val logsFrag = LogActivity()
-        val visualFrag = VisualizeActivity()
 
         makeCurrentFragment(homeFrag)
 
@@ -30,7 +28,6 @@ class MainActivity : AppCompatActivity() {
              when(it.itemId) {
                  R.id.nav_home -> makeCurrentFragment(homeFrag)
                  R.id.nav_logs -> makeCurrentFragment(logsFrag)
-                 R.id.nav_visualize -> makeCurrentFragment(visualFrag)
              }
             true
         }

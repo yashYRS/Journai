@@ -11,8 +11,4 @@
             android:icon="@drawable/nav_bar_logs"
             android:title="@string/nav_logs" />
 
-    <item
-            android:id="@+id/nav_visualize"
-            android:icon="@drawable/nav_bar_visualize"
-            android:title="@string/nav_visualize" />
 </menu>

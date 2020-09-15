@@ -4,8 +4,6 @@ import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
-import com.example.journalentry.MenuActivity
 
 class DatabaseManager(context: AppCompatActivity): SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VER) {
     companion object {
@@ -14,7 +12,7 @@ class DatabaseManager(context: AppCompatActivity): SQLiteOpenHelper(context, DAT
 
         // Table 1
         private const val TABLE1_NAME = "Entity"
-        private const val COL1_KEY = "Key"
+        private const val COL1_KEY = "KeyValue"
         private const val COL1_VALUE = "Value"
         private const val COL1_ID = "Id"
         private const val COL1_SENTENCE_ID = "SentenceId"
@@ -34,13 +32,15 @@ class DatabaseManager(context: AppCompatActivity): SQLiteOpenHelper(context, DAT
         private const val COL3_NOTE_ID = "NoteId"
         private const val COL3_CONTENT = "Content"
         private const val COL3_SENTIMENT = "Sentiment"
-        private const val COL3_ENTITIES_ID = "EntitiesId"
+        private const val COL3_UPDATED = "Updated"
+        private const val COL3_INTENT = "Intent"
+        private const val COL3_CONFIDENCE = "Confidence"
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
-        val CREATE_TABLE1_QUERY: String = "CREATE TABLE $TABLE1_NAME ($COL1_ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, " + COL1_KEY + "TEXT, $COL1_VALUE TEXT NOT NULL, $COL1_SENTENCE_ID INTEGER NOT NULL, $COL1_TYPE TEXT NOT NULL, $COL1_SCORE INTEGER NOT NULL)"
-        val CREATE_TABLE2_QUERY: String = "CREATE TABLE $TABLE2_NAME ($COL2_ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, $COL2_CONTENT TEXT NOT NULL, $COL2_INTENT TEXT, $COL2_DATETIME TEXT NOT NULL)"
-        val CREATE_TABLE3_QUERY: String = "CREATE TABLE $TABLE3_NAME ($COL3_ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, $COL3_NOTE_ID INTEGER NOT NULL, $COL3_CONTENT TEXT NOT NULL, $COL3_SENTIMENT INTEGER, $COL3_ENTITIES_ID INTEGER)"
+        val CREATE_TABLE1_QUERY: String = "CREATE TABLE $TABLE1_NAME ($COL1_ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, $COL1_KEY TEXT, $COL1_VALUE TEXT NOT NULL, $COL1_SENTENCE_ID INTEGER NOT NULL, $COL1_TYPE TEXT NOT NULL, $COL1_SCORE REAL NOT NULL)"
+        val CREATE_TABLE2_QUERY = "CREATE TABLE $TABLE2_NAME ($COL2_ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, $COL2_CONTENT TEXT NOT NULL, $COL2_INTENT TEXT, $COL2_DATETIME TEXT NOT NULL)"
+        val CREATE_TABLE3_QUERY = "CREATE TABLE $TABLE3_NAME ($COL3_ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, $COL3_NOTE_ID INTEGER NOT NULL, $COL3_CONTENT TEXT NOT NULL, $COL3_SENTIMENT REAL, $COL3_UPDATED INTEGER, $COL3_INTENT TEXT, $COL3_CONFIDENCE REAL)"
 
         db!!.execSQL(CREATE_TABLE1_QUERY)
         db.execSQL(CREATE_TABLE2_QUERY)
@@ -66,13 +66,39 @@ class DatabaseManager(context: AppCompatActivity): SQLiteOpenHelper(context, DAT
         db.close()
     }
 
+    fun getEntities(sentId: Int): ArrayList<Entity> {
+        val db = this.readableDatabase
+        val query = "SELECT * FROM $TABLE1_NAME WHERE $COL1_SENTENCE_ID=?"
+        val cursor = db.rawQuery(query, arrayOf("$sentId"))
+        var key: String
+        var value: String
+        var type: String
+        var score: Float
+        val entities = ArrayList<Entity> ()
+        if (cursor != null) {
+            cursor.moveToFirst()
+            while(cursor.moveToNext()) {
+                key = cursor.getString(cursor.getColumnIndex(COL1_KEY))
+                value = cursor.getString(cursor.getColumnIndex(COL1_VALUE))
+                type = cursor.getString(cursor.getColumnIndex(COL1_TYPE))
+                score = cursor.getString(cursor.getColumnIndex(COL1_SCORE)).toFloat()
+                entities.add(Entity(key, value, sentId, type, score))
+            }
+        }
+        cursor.close()
+        db.close()
+        return entities
+    }
+
     fun addSentence(sentence: Sentence) {
         val db = this.writableDatabase
         val values = ContentValues()
         values.put(COL3_NOTE_ID, sentence.noteId)
         values.put(COL3_CONTENT, sentence.content)
         values.put(COL3_SENTIMENT, sentence.sentiment)
-        values.put(COL3_ENTITIES_ID, sentence.entitiesId)
+        values.put(COL3_UPDATED, sentence.updated)
+        values.put(COL3_INTENT, sentence.intent)
+        values.put(COL3_CONFIDENCE, sentence.confidence)
 
         db.insert(TABLE3_NAME, null, values)
         db.close()
@@ -81,10 +107,14 @@ class DatabaseManager(context: AppCompatActivity): SQLiteOpenHelper(context, DAT
     fun updateSentence(sentence: Sentence, id: Int) {
         val db = this.writableDatabase
         val values = ContentValues()
+        values.put(COL3_ID, id)
         values.put(COL3_NOTE_ID, sentence.noteId)
         values.put(COL3_CONTENT, sentence.content)
         values.put(COL3_SENTIMENT, sentence.sentiment)
-        values.put(COL3_ENTITIES_ID, sentence.entitiesId)
+        values.put(COL3_UPDATED, sentence.updated)
+        values.put(COL3_INTENT, sentence.intent)
+        values.put(COL3_CONFIDENCE, sentence.confidence)
+
         db.update(TABLE3_NAME, values, "$COL3_ID = $id", null)
         db.close()
     }
@@ -99,37 +129,62 @@ class DatabaseManager(context: AppCompatActivity): SQLiteOpenHelper(context, DAT
             id = cursor.getString(cursor.getColumnIndex(COL3_ID)).toInt()
         }
         cursor.close()
+        db.close()
         return id
     }
 
-    fun getSentence(sentence: String): Sentence {
+    fun getSentence(sentId: Int): Sentence {
         val db = this.readableDatabase
-        val query = "SELECT $COL3_ID FROM $TABLE3_NAME WHERE $COL3_CONTENT=?"
-        val cursor = db.rawQuery(query, arrayOf(sentence))
-        var enti = 0
-        var senti = 0
+        val query = "SELECT * FROM $TABLE3_NAME WHERE $COL3_ID=?"
+        val cursor = db.rawQuery(query, arrayOf("$sentId"))
         var noteId = 0
+        var senti = 0f
+        var updated = 0
+        var intent = ""
+        var conf = 0f
+        var content = ""
         if (cursor != null) {
             cursor.moveToFirst()
+            content = cursor.getString(cursor.getColumnIndex(COL3_CONTENT))
             noteId = cursor.getString(cursor.getColumnIndex(COL3_NOTE_ID)).toInt()
-            enti = cursor.getString(cursor.getColumnIndex(COL3_ENTITIES_ID)).toInt()
-            senti = cursor.getString(cursor.getColumnIndex(COL3_SENTIMENT)).toInt()
+            updated = cursor.getString(cursor.getColumnIndex(COL3_UPDATED)).toInt()
+            senti = cursor.getString(cursor.getColumnIndex(COL3_UPDATED)).toFloat()
+            intent = cursor.getString(cursor.getColumnIndex(COL3_INTENT))
+            conf = cursor.getString(cursor.getColumnIndex(COL3_CONFIDENCE)).toFloat()
         }
         cursor.close()
-        return Sentence(noteId, sentence,   senti, enti)
+        db.close()
+        return Sentence(noteId, content, senti, updated, intent, conf)
     }
 
     fun getSentences(): List<Sentence> {
         val db = this.readableDatabase
         val query = "SELECT * FROM $TABLE3_NAME"
         val cursor = db.rawQuery(query,null)
-        val sentArr = List(cursor.count) { Sentence(0,"",0,0) }.toMutableList()
+        val sentArr = List(cursor.count) { Sentence(0,"",0f,0, "", 0f) }.toMutableList()
         var j = 0
         while(cursor.moveToNext()) {
-            val tempSentence = Sentence(cursor.getString(1).toInt(), cursor.getString(2), cursor.getString(3).toInt(), cursor.getString(4).toInt())
+            val tempSentence = Sentence(cursor.getString(1).toInt(), cursor.getString(2), cursor.getString(3).toFloat(), cursor.getString(4).toInt(), cursor.getString(5), cursor.getString(6).toFloat())
             sentArr[j] = tempSentence
             j++
         }
+        cursor.close()
+        db.close()
+        return sentArr
+    }
+
+    fun getSentencesForNote(noteId: Int): List<Sentence> {
+        val db = this.readableDatabase
+        val query = "SELECT * FROM $TABLE3_NAME WHERE $COL3_NOTE_ID =?"
+        val cursor = db.rawQuery(query, arrayOf("$noteId"))
+        val sentArr = List(cursor.count) { Sentence(0,"",0f,0, "", 0f) }.toMutableList()
+        var j = 0
+        while(cursor.moveToNext()) {
+            val tempSentence = Sentence(cursor.getString(1).toInt(), cursor.getString(2), cursor.getString(3).toFloat(), cursor.getString(4).toInt(), cursor.getString(5), cursor.getString(6).toFloat())
+            sentArr[j] = tempSentence
+            j++
+        }
+        cursor.close()
         db.close()
         return sentArr
     }
@@ -145,6 +200,24 @@ class DatabaseManager(context: AppCompatActivity): SQLiteOpenHelper(context, DAT
         db.close()
     }
 
+    fun getNote(noteId: String): Note {
+        val db = this.readableDatabase
+        val query = "SELECT * FROM $TABLE2_NAME WHERE $COL2_ID=?"
+        val cursor = db.rawQuery(query, arrayOf(noteId))
+        var content = ""
+        var intent = ""
+        var dateTime = "0"
+        if (cursor != null) {
+            cursor.moveToFirst()
+            content = cursor.getString(cursor.getColumnIndex(COL2_CONTENT))
+            intent = cursor.getString(cursor.getColumnIndex(COL2_INTENT))
+            dateTime = cursor.getString(cursor.getColumnIndex(COL2_DATETIME))
+        }
+        cursor.close()
+        db.close()
+        return Note(content, intent, dateTime)
+    }
+
     fun getNotes(): List<Note> {
         val db = this.readableDatabase
         val query = "SELECT * FROM $TABLE2_NAME"
@@ -156,6 +229,8 @@ class DatabaseManager(context: AppCompatActivity): SQLiteOpenHelper(context, DAT
             noteArr[j] = tempNote
             j++
         }
+        cursor.close()
+        db.close()
         return noteArr
     }
 
@@ -171,5 +246,17 @@ class DatabaseManager(context: AppCompatActivity): SQLiteOpenHelper(context, DAT
         cursor.close()
         db.close()
         return id
+    }
+
+    fun updateNote(note: Note, id: Int) {
+        val db = this.writableDatabase
+        val values = ContentValues()
+        values.put(COL2_ID, id)
+        values.put(COL2_CONTENT, note.content)
+        values.put(COL2_INTENT, note.intent)
+        values.put(COL2_DATETIME, note.dateTime)
+
+        db.update(TABLE2_NAME, values, "$COL3_ID = $id", null)
+        db.close()
     }
 }

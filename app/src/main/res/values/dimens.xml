@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="button_height">100dp</dimen>
-    <dimen name="cancel_button_size">5sp</dimen>
+    <dimen name="cancel_button_size">40sp</dimen>
     <dimen name="entry_card_size">250sp</dimen>
     <dimen name="card_name_height">20sp</dimen>
+    <dimen name="search_button">50sp</dimen>
 </resources>

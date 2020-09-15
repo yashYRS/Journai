@@ -1,21 +1,15 @@
 package com.example.journalentry.getapi
 
-import com.example.journalentry.MainActivity
+import androidx.appcompat.app.AppCompatActivity
 import com.example.journalentry.database.DatabaseManager
 import com.example.journalentry.database.Entity
 import com.example.journalentry.database.Sentence
-import com.google.gson.Gson
 import okhttp3.OkHttpClient
-import okhttp3.Request
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
+import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
 import java.net.URLEncoder
 
-
-class ApiManager(){
+class ApiManager{
     companion object {
         fun createRetrofit(): Retrofit{
             val httpClient = OkHttpClient.Builder()
@@ -29,34 +23,23 @@ class ApiManager(){
                 chain.proceed(request)
             }
 
-            val retrofit = Retrofit.Builder()
+            return Retrofit.Builder()
                 .baseUrl("https://api.wit.ai/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(httpClient.build())
                 .build()
-            return retrofit
         }
     }
-    val db = DatabaseManager(MainActivity())
-    fun getQuery(query: String) {
-        val query = URLEncoder.encode(query,"UTF-8").replace("+", "%20")
+
+    // GET Request to the API
+    fun getRequest(query: String, context: AppCompatActivity) {
         val url = "https://api.wit.ai/message?v=20200908&q=$query"
         val retrofit = createRetrofit()
         val jsonPlaceHolderApi = retrofit.create(
             JsonPlaceHolderApi::class.java
         )
         val call = jsonPlaceHolderApi.getPosts(url)
-        val gson = Gson()
-//        return gson.fromJson(call.request(),Post::class.java)
-    }
-    fun getRequest(query: String) {
-        val url = "https://api.wit.ai/message?v=20200908&q=$query"
-        val retrofit = createRetrofit()
-        val jsonPlaceHolderApi = retrofit.create(
-            JsonPlaceHolderApi::class.java
-        )
-        val call = jsonPlaceHolderApi.getPosts(url)
-        call.enqueue(object : Callback<Post?> {
+        call!!.enqueue(object : Callback<Post?> {
             override fun onResponse(call: Call<Post?>, response: Response<Post?>) {
                 if (!response.isSuccessful) {
                     println("Code: " + response.code())
@@ -64,28 +47,73 @@ class ApiManager(){
                 }
                 val post = response.body()
                 if (post != null) {
-                    updateDb(post,query)
+                    updateDb(post, query, context)
                 }
             }
-
             override fun onFailure(call: Call<Post?>, t: Throwable) {
                 println(t.message)
             }
-
-            private fun updateDb(post: Post, query: String) {
-                val gsonObj = Gson()
-//                val
-
-//                for (e in ent.indices) {
-//                    db.addEntities(Entity(e["key"],e[""],sentId,t,s))
-//                }
-//                val sentence = db.getSentence(query)
-//                sentence.sentiment = 1
-//                sentence.entitiesId =
-//                db.updateSentence(sentence, sentId)
-
-            }
         })
+    }
+
+    private fun updateDb(post: Post, query: String, context: AppCompatActivity) {
+        val db = DatabaseManager(context)
+
+        val entities = post.witEntities
+        val intents = post.witIntents
+        val traits = post.witTraits
+        val sentId = db.getSentenceId(query)
+
+        // Add Entities in DB
+        if (entities != null) {
+            for ((_, value) in entities) {
+                val entityVal = value[0]["value"].toString()
+                val entityTyp = value[0]["type"].toString()
+                val entityScore = value[0]["confidence"].toString().toFloat()
+                val entityKey = value[0]["body"].toString()
+                val newEnt = Entity(entityKey, entityVal, sentId, entityTyp, entityScore)
+                db.addEntities(newEnt)
+            }
+        }
+
+        // Get Sentiment
+        var sentiment = 0f
+        if (traits != null) {
+            for ((key, value) in traits) {
+                if (key == "wit\$sentiment"){
+                    sentiment = value[0]["confidence"].toString().toFloat()
+                }
+            }
+        }
+
+        // get Intent
+        var intent = ""
+        var confidence = 0f
+        if (intents != null) {
+            if (intents.isNotEmpty()) {
+                intent = intents[0]["name"].toString()
+                confidence = intents[0]["confidence"].toString().toFloat()
+            }
+        }
+
+        // Update Sentence in DB
+        val sentence = db.getSentence(sentId)
+        val updatedSentence = Sentence(sentence.noteId, sentence.content, sentiment, 1, intent, confidence)
+        db.updateSentence(updatedSentence, sentId)
+        db.close()
+    }
+
+    // Search Query request
+    fun getQuery(query: String): Call<Post?>? {
+        val query = URLEncoder.encode(query, "UTF-8").replace("+", "%20")
+        val url = "https://api.wit.ai/message?v=20200908&q=$query"
+
+        val retrofit = createRetrofit()
+
+        val jsonPlaceHolderApi = retrofit.create(
+            JsonPlaceHolderApi::class.java
+        )
+        return jsonPlaceHolderApi.getPosts(url)
     }
 }
 

@@ -16,13 +16,11 @@ class RvAdapter(private val noteList: ArrayList<Model>) : RecyclerView.Adapter<R
         return noteList.size
     }
     override fun onBindViewHolder(p0: ViewHolder, p1: Int) {
-
         p0.name.text = noteList[p1].index
         p0.content.text = noteList[p1].content
     }
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val name: TextView = itemView.findViewById(R.id.card_name)
         val content: TextView = itemView.findViewById(R.id.card_content)
-
     }
 }

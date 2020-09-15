@@ -22,5 +22,9 @@
                 android:paddingTop="10sp" 
                 android:paddingBottom="10sp" 
                 android:padding="5sp"/>
+        <TextView
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/card_name_height"
+                android:id="@+id/sentiment"/>
     </LinearLayout>
 </androidx.cardview.widget.CardView>
